@@ -1,2 +1,0 @@
-# cvhaz-r
-CV sitem
