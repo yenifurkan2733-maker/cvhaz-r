@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AD SOYAD - Özel Eğitim Öğretmeni</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; }
+        
+        .a4-page {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 15mm;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        /* Düzenleme Modu Stilleri */
+        .editable {
+            border: 2px dashed transparent;
+            border-radius: 4px;
+            transition: all 0.2s;
+            position: relative;
+            cursor: text;
+        }
+        
+        .edit-mode .editable {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .editable:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .editable:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Fotoğraf Yükleme */
+        .photo-upload {
+            position: relative;
+            cursor: pointer;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .photo-upload input[type="file"] {
+            display: none;
+        }
+        
+        .photo-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .photo-upload:hover .photo-placeholder {
+            transform: scale(1.05);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .photo-upload img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            display: none;
+        }
+        
+        .photo-upload.has-image img { display: block; }
+        .photo-upload.has-image .photo-placeholder { display: none; }
+        
+        .photo-edit-hint {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #3b82f6;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .edit-mode .photo-upload:hover .photo-edit-hint {
+            opacity: 1;
+        }
+        
+        /* Yeni Eleman Ekleme Butonları */
+        .add-btn {
+            display: none;
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .edit-mode .add-btn {
+            display: inline-flex;
+        }
+        
+        .add-btn:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+        
+        /* Silme Butonu */
+        .delete-btn {
+            display: none;
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        
+        .edit-mode .editable:hover .delete-btn {
+            display: flex;
+        }
+        
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+        
+        /* Renk Seçici */
+        .color-picker {
+            display: none;
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        
+        .edit-mode .color-picker {
+            display: block;
+        }
+        
+        .color-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .color-option:hover, .color-option.active {
+            border-color: #1f2937;
+            transform: scale(1.1);
+        }
+        
+        /* Bölüm Ekleme Menüsü */
+        .section-menu {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        
+        .edit-mode .section-menu {
+            display: block;
+        }
+        
+        .menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .menu-item:hover {
+            background: #f3f4f6;
+        }
+        
+        /* Sürükle Bırak */
+        .draggable {
+            cursor: move;
+        }
+        
+        .edit-mode .draggable:hover {
+            cursor: move;
+            opacity: 0.8;
+        }
+        
+        .dragging {
+            opacity: 0.5;
+            border: 2px dashed #3b82f6;
+        }
+        
+        @media print {
+            .a4-page {
+                box-shadow: none;
+                padding: 10mm;
+            }
+            .no-print, .edit-mode .add-btn, .edit-mode .delete-btn, 
+            .color-picker, .section-menu, .photo-edit-hint {
+                display: none !important;
+            }
+            .editable {
+                border: none !important;
+                background: transparent !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .a4-page { padding: 5mm; }
+            .two-col { flex-direction: column; }
+            .col-left, .col-right { width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Kontrol Paneli -->
+    <div class="no-print fixed top-4 left-4 z-50 flex gap-2">
+        <button onclick="toggleEditMode()" id="editToggle" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+            <i class="fas fa-edit"></i>
+            <span>Düzenle</span>
+        </button>
+        <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+            <i class="fas fa-print"></i>
+            <span>PDF</span>
+        </button>
+        <button onclick="resetDefault()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+            <i class="fas fa-undo"></i>
+            <span>Sıfırla</span>
+        </button>
+    </div>
+
+    <!-- Renk Seçici -->
+    <div class="color-picker no-print">
+        <h4 class="text-sm font-bold mb-3 text-gray-700">Tema Rengi</h4>
+        <div class="flex gap-2 flex-wrap">
+            <div class="color-option active" style="background: #1e40af" onclick="changeColor('#1e40af', '#3b82f6')" title="Mavi"></div>
+            <div class="color-option" style="background: #059669" onclick="changeColor('#059669', '#10b981')" title="Yeşil"></div>
+            <div class="color-option" style="background: #7c3aed" onclick="changeColor('#7c3aed', '#8b5cf6')" title="Mor"></div>
+            <div class="color-option" style="background: #dc2626" onclick="changeColor('#dc2626', '#ef4444')" title="Kırmızı"></div>
+            <div class="color-option" style="background: #ea580c" onclick="changeColor('#ea580c', '#f97316')" title="Turuncu"></div>
+            <div class="color-option" style="background: #0891b2" onclick="changeColor('#0891b2', '#06b6d4')" title="Turkuaz"></div>
+            <div class="color-option" style="background: #374151" onclick="changeColor('#374151', '#6b7280')" title="Gri"></div>
+        </div>
+        <h4 class="text-sm font-bold mb-3 mt-4 text-gray-700">Yazı Tipi</h4>
+        <select onchange="changeFont(this.value)" class="w-full p-2 border rounded text-sm">
+            <option value="Inter">Inter (Modern)</option>
+            <option value="Georgia">Georgia (Klasik)</option>
+            <option value="Courier New">Courier (Teknik)</option>
+            <option value="Trebuchet MS">Trebuchet (Rahat)</option>
+        </select>
+    </div>
+
+    <!-- Bölüm Ekleme Menüsü -->
+    <div class="section-menu no-print">
+        <h4 class="text-sm font-bold mb-2 text-gray-700">Yeni Bölüm Ekle</h4>
+        <div class="menu-item" onclick="addSection('education')">
+            <i class="fas fa-graduation-cap text-blue-600"></i> Eğitim
+        </div>
+        <div class="menu-item" onclick="addSection('experience')">
+            <i class="fas fa-briefcase text-green-600"></i> Deneyim
+        </div>
+        <div class="menu-item" onclick="addSection('skill')">
+            <i class="fas fa-star text-yellow-600"></i> Yetenek
+        </div>
+        <div class="menu-item" onclick="addSection('certificate')">
+            <i class="fas fa-certificate text-purple-600"></i> Sertifika
+        </div>
+        <div class="menu-item" onclick="addSection('language')">
+            <i class="fas fa-language text-red-600"></i> Dil
+        </div>
+    </div>
+
+    <!-- Ana CV -->
+    <div class="a4-page" id="cvContainer">
+        
+        <!-- HEADER -->
+        <div class="header-bg bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6 rounded-t-lg mb-4" id="headerSection">
+            <div class="flex flex-col md:flex-row items-center gap-4">
+                <!-- Fotoğraf -->
+                <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+                    <input type="file" id="photoInput" accept="image/*" onchange="loadPhoto(event)">
+                    <div class="photo-placeholder">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <img id="profilePhoto" src="" alt="">
+                    <span class="photo-edit-hint">Fotoğraf Değiştir</span>
+                </div>
+                
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="text-3xl font-bold editable" contenteditable="false" data-field="name">AD SOYAD</h1>
+                    <p class="text-lg text-blue-100 editable" contenteditable="false" data-field="title">Özel Eğitim Öğretmeni</p>
+                    
+                    <div class="flex flex-wrap gap-3 mt-2 text-sm justify-center md:justify-start">
+                        <span class="editable flex items-center gap-1" contenteditable="false" data-field="phone">
+                            <i class="fas fa-phone text-blue-200"></i>+90 5XX XXX XX XX
+                        </span>
+                        <span class="editable flex items-center gap-1" contenteditable="false" data-field="email">
+                            <i class="fas fa-envelope text-blue-200"></i>email@ornek.com
+                        </span>
+                        <span class="editable flex items-center gap-1" contenteditable="false" data-field="location">
+                            <i class="fas fa-map-marker-alt text-blue-200"></i>KKTC/Gazimağusa
+                        </span>
+                        <span class="editable flex items-center gap-1" contenteditable="false" data-field="birthdate">
+                            <i class="fas fa-calendar text-blue-200"></i>21.05.2002
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- İÇERİK -->
+        <div class="flex flex-col md:flex-row gap-4" id="mainContent">
+            
+            <!-- SOL KOLON -->
+            <div class="w-full md:w-1/3 space-y-3" id="leftColumn">
+                
+                <!-- Kişisel Bilgiler -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="personal">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-user mr-1"></i>Kişisel Bilgiler
+                        </h3>
+                        <button class="add-btn" onclick="addPersonalField()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="text-xs space-y-1" id="personalFields">
+                        <div class="flex justify-between editable-group">
+                            <span class="text-gray-600 editable" contenteditable="false">Doğum Tarihi:</span>
+                            <span class="editable" contenteditable="false">21/05/2002</span>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="flex justify-between editable-group">
+                            <span class="text-gray-600 editable" contenteditable="false">Cinsiyet:</span>
+                            <span class="editable" contenteditable="false">Bay</span>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="flex justify-between editable-group">
+                            <span class="text-gray-600 editable" contenteditable="false">Medeni Durum:</span>
+                            <span class="editable" contenteditable="false">Bekar</span>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="flex justify-between editable-group">
+                            <span class="text-gray-600 editable" contenteditable="false">Uyruk:</span>
+                            <span class="editable" contenteditable="false">T.C.</span>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="flex justify-between editable-group">
+                            <span class="text-gray-600 editable" contenteditable="false">Ehliyet:</span>
+                            <span class="editable" contenteditable="false">B Sınıfı</span>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="flex justify-between editable-group">
+                            <span class="text-gray-600 editable" contenteditable="false">Askerlik:</span>
+                            <span class="editable" contenteditable="false">Tecilli</span>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bilişim -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="computer">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-laptop mr-1"></i>Bilişim
+                        </h3>
+                        <button class="add-btn" onclick="addSkill('computer')"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="flex flex-wrap gap-1" id="computerSkills">
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs editable" contenteditable="false">Word</span>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs editable" contenteditable="false">PowerPoint</span>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs editable" contenteditable="false">Outlook</span>
+                    </div>
+                </div>
+
+                <!-- Diller -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="languages">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-language mr-1"></i>Diller
+                        </h3>
+                        <button class="add-btn" onclick="addLanguage()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="space-y-2" id="languageList">
+                        <div class="editable-group relative">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="editable" contenteditable="false">İngilizce</span>
+                                <span class="editable text-blue-600" contenteditable="false">Çok İyi</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-blue-600 h-1.5 rounded-full editable-bar" style="width: 85%" contenteditable="false" onclick="editBar(this)"></div>
+                            </div>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sertifikalar -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="certificates">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-certificate mr-1"></i>Sertifikalar
+                        </h3>
+                        <button class="add-btn" onclick="addCertificate()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="space-y-2 text-xs" id="certificateList">
+                        <div class="border-l-2 border-blue-500 pl-2 editable-group relative">
+                            <p class="text-gray-500 text-xs editable" contenteditable="false">07.10.2024</p>
+                            <p class="font-medium editable" contenteditable="false">Matematiksel Yetkinlik ve Fen Teknoloji Temel Yetkinlikler</p>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hobiler -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="hobbies">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-heart mr-1"></i>Hobiler
+                        </h3>
+                        <button class="add-btn" onclick="addHobby()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs" id="hobbyList">
+                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded editable" contenteditable="false">Müzik</span>
+                        <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded editable" contenteditable="false">Tiyatro</span>
+                    </div>
+                </div>
+
+                <!-- Referans -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="reference">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-user-tie mr-1"></i>Referanslar
+                        </h3>
+                        <button class="add-btn" onclick="addReference()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="space-y-2 text-xs" id="referenceList">
+                        <div class="editable-group relative">
+                            <p class="font-semibold editable" contenteditable="false">Ad Soyad</p>
+                            <p class="text-gray-500 editable" contenteditable="false">Toroslar Lodos Özel Eğitim</p>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SAĞ KOLON -->
+            <div class="w-full md:w-2/3 space-y-3" id="rightColumn">
+                
+                <!-- Kariyer Hedefi -->
+                <div class="bg-blue-50 border-l-4 border-blue-600 p-3 rounded-r-lg draggable" draggable="true" data-section="objective">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-sm font-bold text-blue-800 editable" contenteditable="false">
+                            <i class="fas fa-bullseye mr-1"></i>Kariyer Hedefi
+                        </h3>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <p class="text-xs text-gray-700 italic editable" contenteditable="false">
+                        Kısa vadede eğitim ve kariyer geçmişime uygun bir fırsat yakalamak. Uzun vadede şirkete değer katarak yöneticiliğe terfi etmek.
+                    </p>
+                </div>
+
+                <!-- Eğitim -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="education">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-graduation-cap mr-1"></i>Eğitim
+                        </h3>
+                        <button class="add-btn" onclick="addEducation()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="space-y-3" id="educationList">
+                        <div class="relative pl-3 border-l-2 border-gray-300 editable-group">
+                            <div class="absolute -left-1.5 top-1 w-2.5 h-2.5 bg-blue-600 rounded-full border border-white"></div>
+                            <div class="flex justify-between items-baseline">
+                                <h4 class="text-sm font-bold editable" contenteditable="false">Doğu Akdeniz Üniversitesi</h4>
+                                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs editable" contenteditable="false">2025</span>
+                            </div>
+                            <p class="text-blue-600 text-xs font-medium editable" contenteditable="false">Özel Eğitim Öğretmenliği (Tam Burslu)</p>
+                            <p class="text-gray-500 text-xs editable" contenteditable="false">KKTC</p>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="relative pl-3 border-l-2 border-gray-300 editable-group">
+                            <div class="absolute -left-1.5 top-1 w-2.5 h-2.5 bg-gray-400 rounded-full border border-white"></div>
+                            <h4 class="text-sm font-bold editable" contenteditable="false">Birey Anadolu Lisesi</h4>
+                            <p class="text-gray-500 text-xs editable" contenteditable="false">Mersin</p>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- İş Deneyimi -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="experience">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-briefcase mr-1"></i>İş Deneyimi
+                        </h3>
+                        <button class="add-btn" onclick="addExperience()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="space-y-3" id="experienceList">
+                        <div class="pb-2 border-b border-gray-200 editable-group relative">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <h4 class="text-sm font-bold editable" contenteditable="false">Stajyer Öğretmen</h4>
+                                <span class="text-xs text-gray-500 editable" contenteditable="false">KKTC/Gazimağusa</span>
+                            </div>
+                            <p class="text-blue-600 text-xs font-medium editable" contenteditable="false">Mağusa Özel Eğitim Merkezi</p>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="editable-group relative">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <h4 class="text-sm font-bold editable" contenteditable="false">Stajyer Öğretmen</h4>
+                            </div>
+                            <p class="text-blue-600 text-xs font-medium mb-2 editable" contenteditable="false">Toroslar Lodos Özel Eğitim ve Rehabilitasyon Merkezi</p>
+                            <p class="text-xs text-gray-700 mb-2 editable" contenteditable="false">
+                                Okul öncesi, ilkokul ve ortaokul seviyesinde bire bir ve grup eğitimleri gerçekleştirdim.
+                            </p>
+                            <div class="flex flex-wrap gap-1 mb-2" id="experienceTags">
+                                <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs editable" contenteditable="false">Otizm</span>
+                                <span class="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs editable" contenteditable="false">Öğrenme Güçlüğü</span>
+                                <span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs editable" contenteditable="false">Zihinsel Yetersizlik</span>
+                                <span class="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded text-xs editable" contenteditable="false">Dil/Konuşma</span>
+                                <span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs editable" contenteditable="false">DEHB</span>
+                            </div>
+                            <p class="text-xs text-gray-600 italic editable" contenteditable="false">
+                                Bireyselleştirilmiş eğitim programları uygulandı, gelişim süreçleri takip edildi.
+                            </p>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Üyelik -->
+                <div class="bg-gray-50 p-3 rounded-lg draggable" draggable="true" data-section="membership">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold uppercase border-b-2 border-blue-800 pb-1 flex-1 editable" contenteditable="false">
+                            <i class="fas fa-users mr-1"></i>Üyelikler
+                        </h3>
+                        <button class="add-btn" onclick="addMembership()"><i class="fas fa-plus"></i></button>
+                        <button class="delete-btn" onclick="deleteSection(this)"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="space-y-2 text-xs" id="membershipList">
+                        <div class="flex items-center gap-2 editable-group relative">
+                            <i class="fas fa-university text-blue-600"></i>
+                            <div>
+                                <p class="font-semibold editable" contenteditable="false">Doğu Akdeniz Üniversitesi Özel Eğitim Kulübü</p>
+                                <p class="text-gray-500 editable" contenteditable="false">Aktif Üye</p>
+                            </div>
+                            <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-4 pt-2 border-t text-center text-xs text-gray-400 editable" contenteditable="false">
+            © 2025 AD SOYAD - Öz geçmiş
+        </div>
+
+    </div>
+
+    <script>
+        // Düzenleme Modu
+        let editMode = false;
+        
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.body.classList.toggle('edit-mode');
+            const btn = document.getElementById('editToggle');
+            const editables = document.querySelectorAll('[contenteditable]');
+            
+            editables.forEach(el => {
+                el.setAttribute('contenteditable', editMode);
+            });
+            
+            if (editMode) {
+                btn.innerHTML = '<i class="fas fa-check"></i><span>Bitir</span>';
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                btn.classList.add('bg-red-600', 'hover:bg-red-700');
+                initDragAndDrop();
+            } else {
+                btn.innerHTML = '<i class="fas fa-edit"></i><span>Düzenle</span>';
+                btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                saveChanges();
+            }
+        }
+        
+        // Fotoğraf Yükleme
+        function loadPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('profilePhoto');
+                    img.src = e.target.result;
+                    img.parentElement.classList.add('has-image');
+                    localStorage.setItem('cvPhoto', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Renk Değiştirme
+        function changeColor(primary, secondary) {
+            document.documentElement.style.setProperty('--primary', primary);
+            const header = document.getElementById('headerSection');
+            header.className = `header-bg bg-gradient-to-r from-[${primary}] to-[${secondary}] text-white p-6 rounded-t-lg mb-4`;
+            
+            // Tüm mavi elementleri güncelle
+            document.querySelectorAll('.text-blue-600, .text-blue-700, .text-blue-800').forEach(el => {
+                el.style.color = primary;
+            });
+            document.querySelectorAll('.bg-blue-100').forEach(el => {
+                el.style.backgroundColor = primary + '20';
+                el.style.color = primary;
+            });
+            document.querySelectorAll('.border-blue-800').forEach(el => {
+                el.style.borderColor = primary;
+            });
+            document.querySelectorAll('.bg-blue-600').forEach(el => {
+                el.style.backgroundColor = primary;
+            });
+            
+            // Aktif renk işareti
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            localStorage.setItem('cvColor', primary);
+        }
+        
+        // Font Değiştirme
+        function changeFont(font) {
+            document.body.style.fontFamily = font;
+            localStorage.setItem('cvFont', font);
+        }
+        
+        // Yeni Alan Ekleme Fonksiyonları
+        function addPersonalField() {
+            const container = document.getElementById('personalFields');
+            const div = document.createElement('div');
+            div.className = 'flex justify-between editable-group';
+            div.innerHTML = `
+                <span class="text-gray-600 editable" contenteditable="${editMode}">Yeni Alan:</span>
+                <span class="editable" contenteditable="${editMode}">Değer</span>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addSkill(type) {
+            const container = type === 'computer' ? document.getElementById('computerSkills') : document.getElementById('experienceTags');
+            const span = document.createElement('span');
+            span.className = 'px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs editable';
+            span.contentEditable = editMode;
+            span.textContent = 'Yeni Yetenek';
+            container.appendChild(span);
+        }
+        
+        function addLanguage() {
+            const container = document.getElementById('languageList');
+            const div = document.createElement('div');
+            div.className = 'editable-group relative';
+            div.innerHTML = `
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="editable" contenteditable="${editMode}">Dil Adı</span>
+                    <span class="editable text-blue-600" contenteditable="${editMode}">Seviye</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                    <div class="bg-blue-600 h-1.5 rounded-full editable-bar" style="width: 50%" contenteditable="false" onclick="editBar(this)"></div>
+                </div>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function editBar(bar) {
+            if (!editMode) return;
+            const width = prompt('Yüzde kaç? (0-100)', '50');
+            if (width) bar.style.width = width + '%';
+        }
+        
+        function addCertificate() {
+            const container = document.getElementById('certificateList');
+            const div = document.createElement('div');
+            div.className = 'border-l-2 border-blue-500 pl-2 editable-group relative';
+            div.innerHTML = `
+                <p class="text-gray-500 text-xs editable" contenteditable="${editMode}">Tarih</p>
+                <p class="font-medium editable" contenteditable="${editMode}">Sertifika Adı</p>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addHobby() {
+            const container = document.getElementById('hobbyList');
+            const span = document.createElement('span');
+            span.className = 'px-2 py-1 bg-purple-100 text-purple-700 rounded editable';
+            span.contentEditable = editMode;
+            span.textContent = 'Yeni Hobi';
+            container.appendChild(span);
+        }
+        
+        function addReference() {
+            const container = document.getElementById('referenceList');
+            const div = document.createElement('div');
+            div.className = 'editable-group relative';
+            div.innerHTML = `
+                <p class="font-semibold editable" contenteditable="${editMode}">İsim Soyisim</p>
+                <p class="text-gray-500 editable" contenteditable="${editMode}">Kurum</p>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addEducation() {
+            const container = document.getElementById('educationList');
+            const div = document.createElement('div');
+            div.className = 'relative pl-3 border-l-2 border-gray-300 editable-group';
+            div.innerHTML = `
+                <div class="absolute -left-1.5 top-1 w-2.5 h-2.5 bg-blue-600 rounded-full border border-white"></div>
+                <div class="flex justify-between items-baseline">
+                    <h4 class="text-sm font-bold editable" contenteditable="${editMode}">Okul Adı</h4>
+                    <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs editable" contenteditable="${editMode}">Yıl</span>
+                </div>
+                <p class="text-blue-600 text-xs font-medium editable" contenteditable="${editMode}">Bölüm</p>
+                <p class="text-gray-500 text-xs editable" contenteditable="${editMode}">Lokasyon</p>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addExperience() {
+            const container = document.getElementById('experienceList');
+            const div = document.createElement('div');
+            div.className = 'pb-2 border-b border-gray-200 editable-group relative';
+            div.innerHTML = `
+                <div class="flex justify-between items-baseline mb-1">
+                    <h4 class="text-sm font-bold editable" contenteditable="${editMode}">Pozisyon</h4>
+                    <span class="text-xs text-gray-500 editable" contenteditable="${editMode}">Lokasyon</span>
+                </div>
+                <p class="text-blue-600 text-xs font-medium editable" contenteditable="${editMode}">Şirket</p>
+                <p class="text-xs text-gray-700 editable" contenteditable="${editMode}">Açıklama</p>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addMembership() {
+            const container = document.getElementById('membershipList');
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 editable-group relative';
+            div.innerHTML = `
+                <i class="fas fa-university text-blue-600"></i>
+                <div>
+                    <p class="font-semibold editable" contenteditable="${editMode}">Kurum Adı</p>
+                    <p class="text-gray-500 editable" contenteditable="${editMode}">Üyelik Tipi</p>
+                </div>
+                <button class="delete-btn" onclick="deleteField(this)"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
+        
+        // Bölüm Ekleme (Sol/Sağ Kolon)
+        function addSection(type) {
+            const sectionHTML = {
+                'education': '<div class="bg-gray-50 p-3 rounded-lg" data-section="education"><h3>Eğitim</h3><p>Yeni eğitim bilgisi...</p></div>',
+                'experience': '<div class="bg-gray-50 p-3 rounded-lg" data-section="experience"><h3>Deneyim</h3><p>Yeni deneyim...</p></div>',
+                'skill': '<div class="bg-gray-50 p-3 rounded-lg" data-section="skill"><h3>Yetenek</h3><span class="tag">Yeni Yetenek</span></div>',
+                'certificate': '<div class="bg-gray-50 p-3 rounded-lg" data-section="certificate"><h3>Sertifika</h3><p>Yeni sertifika...</p></div>',
+                'language': '<div class="bg-gray-50 p-3 rounded-lg" data-section="language"><h3>Dil</h3><p>Yeni dil...</p></div>'
+            };
+            
+            // Sağ kolona ekle (varsayılan olarak)
+            const rightColumn = document.getElementById('rightColumn');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = sectionHTML[type];
+            rightColumn.appendChild(tempDiv.firstChild);
+        }
+        
+        // Silme Fonksiyonları
+        function deleteField(btn) {
+            if (!editMode) return;
+            btn.parentElement.remove();
+        }
+        
+        function deleteSection(btn) {
+            if (!editMode) return;
+            btn.closest('.draggable').remove();
+        }
+        
+        // Sürükle Bırak
+        function initDragAndDrop() {
+            const draggables = document.querySelectorAll('.draggable');
+            
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('dragging');
+                });
+                
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                });
+            });
+            
+            const columns = [document.getElementById('leftColumn'), document.getElementById('rightColumn')];
+            
+            columns.forEach(column => {
+                column.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(column, e.clientY);
+                    const draggable = document.querySelector('.dragging');
+                    if (afterElement == null) {
+                        column.appendChild(draggable);
+                    } else {
+                        column.insertBefore(draggable, afterElement);
+                    }
+                });
+            });
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        // Kaydetme ve Yükleme
+        function saveChanges() {
+            const cvData = {
+                html: document.getElementById('cvContainer').innerHTML,
+                color: localStorage.getItem('cvColor'),
+                font: localStorage.getItem('cvFont'),
+                photo: localStorage.getItem('cvPhoto')
+            };
+            localStorage.setItem('cvData', JSON.stringify(cvData));
+            alert('Değişiklikler kaydedildi!');
+        }
+        
+        function loadChanges() {
+            const saved = localStorage.getItem('cvData');
+            if (saved) {
+                const cvData = JSON.parse(saved);
+                document.getElementById('cvContainer').innerHTML = cvData.html;
+                
+                if (cvData.photo) {
+                    document.getElementById('profilePhoto').src = cvData.photo;
+                    document.querySelector('.photo-upload').classList.add('has-image');
+                }
+            }
+        }
+        
+        function resetDefault() {
+            if (confirm('Tüm değişiklikler sıfırlanacak. Emin misiniz?')) {
+                localStorage.removeItem('cvData');
+                localStorage.removeItem('cvColor');
+                localStorage.removeItem('cvFont');
+                localStorage.removeItem('cvPhoto');
+                location.reload();
+            }
+        }
+        
+        // Sayfa Yüklendiğinde
+        window.addEventListener('load', () => {
+            loadChanges();
+            
+            // Önceki renk ve fontu uygula
+            const savedColor = localStorage.getItem('cvColor');
+            const savedFont = localStorage.getItem('cvFont');
+            
+            if (savedFont) document.body.style.fontFamily = savedFont;
+        });
+    </script>
+</body>
+</html>
